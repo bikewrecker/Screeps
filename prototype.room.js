@@ -4,7 +4,17 @@ require('prototype.terminal');
 require('prototype.tower');
 
 Room.prototype.runRoom = function() {
-    
+    if(this.name == 'W75N23' && this.controller.level == 6 && this.memory.upgradeFlag != undefined && this.memory.upgradeFlag == true) {
+        this.memory.minCreeps.builder = 2;
+        this.memory.minCreeps.mobileUpgrader = 2;
+        for(let i = 0; i < 7; i++){
+            this.createConstructionSite(28-i, 32+i, STRUCTURE_EXTENSION);
+        }
+        this.createConstructionSite(17, 29, STRUCTURE_EXTENSION);
+        this.createConstructionSite(16, 28, STRUCTURE_EXTENSION);
+        this.createConstructionSite(15, 29, STRUCTURE_EXTENSION);
+        this.memory.upgradeFlag = false;
+    }
     this.runSpawns();
     
     if(this.find(FIND_STRUCTURES, {filter: s => s.structureType == STRUCTURE_LINK})[0] != undefined) {
@@ -117,7 +127,7 @@ Room.prototype.calculateUpgradeTime = function() {
     
     Room.prototype.displayCreeps = function() {
         try{
-            var listOfRoles = ['miner', 'lorry', 'harvester','upgrader', 'linkLorry','sourceLorry', 'builder', 'repairer', 'wallRepairer', 'turretSupplier', 'extractor','terminalLorry', 'mineralLorry', 'helper'];
+            var listOfRoles = ['miner', 'lorry', 'harvester','mobileUpgrader', 'upgrader', 'linkLorry','sourceLorry', 'builder', 'repairer', 'wallRepairer', 'turretSupplier', 'extractor','terminalLorry', 'mineralLorry', 'helper'];
             let numberOfCreeps = {};
             for (let role of listOfRoles) {
                 numberOfCreeps[role] = _.sum(Game.creeps, (c) => c.memory.role == role && c.memory.homeRoom == this.name);

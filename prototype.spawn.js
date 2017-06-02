@@ -11,7 +11,7 @@
             let name = undefined;
             //Defense procedure
             
-            if(this.room.memory.hostileCreep && !(_.some( _.filter(Game.creeps, c => c.memory.role == 'defender' && c.memory.target == this.room.memory.creepLocation)))) {
+            if(this.room.memory.hostileCreep == true && !(_.some( _.filter(Game.creeps, c => c.memory.role == 'defender' && c.memory.target == this.room.memory.creepLocation)))) {
                 name = this.createDefender(this.room.memory.creepLocation);
                 if(name != undefined && _.isString(name)){
                     console.log("Defence protocall initiated: " + this.name + " spawned defender: " + name + ", Objective location: " + this.room.memory.creepLocation);
@@ -380,7 +380,7 @@
         var useEnergy = energy - 50;
         var numberOfParts = Math.floor(useEnergy/450);
         var body = [];
-        for(let i = 0; i < 5; i++) {
+        for(let i = 0; i < numberOfParts; i++) {
             body.push(WORK);
             body.push(WORK);
             body.push(WORK);

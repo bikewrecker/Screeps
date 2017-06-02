@@ -2,7 +2,6 @@ module.exports = {
     run: function(creep) {
         if(creep.room.name != creep.memory.target){
             creep.moveTo(Game.flags[creep.memory.target]);
-            //creep.moveTo(creep.memory.myRoom);
         } else {
             let enemy = creep.room.find(FIND_HOSTILE_CREEPS)[0];
             if(enemy != undefined) {
