@@ -8,7 +8,7 @@ module.exports = {
        }
        if(creep.memory.working == true) {
            //bring to upgrader
-           /*
+           
            if(creep.room.name != creep.memory.homeRoom){// && !(creep.memory.homeRoom == 'W78N26' && creep.room.name == 'W78N25')) {
                 creep.moveTo(Game.flags[creep.room.name + 'Exit']);
             } else {
@@ -38,9 +38,10 @@ module.exports = {
                    }
                 }
            }
-           */
+           
            //end bring to upgrader
            // bring to storage
+           /*
             if(creep.room.name != creep.memory.homeRoom && !(creep.memory.homeRoom == 'W78N26' && creep.room.name == 'W78N25')) {
                 creep.moveTo(Game.flags[creep.room.name + 'Exit']);
             } else {
@@ -61,6 +62,7 @@ module.exports = {
                }
            }
            //end bring to storage
+           */
        } else { // working == false;
             let ground = creep.checkGround(2);
             if(ground == 0 && creep.carry.energy /creep.carryCapacity > 0.8){
