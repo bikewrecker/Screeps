@@ -3,19 +3,8 @@ require('prototype.spawn');
 require('prototype.terminal');
 require('prototype.tower');
 
-Room.prototype.runRoom = function() {
-    if(this.name == 'W75N23' && this.controller.level == 6 && this.memory.upgradeFlag != undefined && this.memory.upgradeFlag == true) {
-        this.memory.minCreeps.builder = 2;
-        this.memory.minCreeps.mobileUpgrader = 2;
-        for(let i = 0; i < 7; i++){
-            this.createConstructionSite(28-i, 32+i, STRUCTURE_EXTENSION);
-        }
-        this.createConstructionSite(17, 29, STRUCTURE_EXTENSION);
-        this.createConstructionSite(16, 28, STRUCTURE_EXTENSION);
-        this.createConstructionSite(15, 29, STRUCTURE_EXTENSION);
-        this.memory.upgradeFlag = false;
-    }
-    this.runSpawns();
+Room.prototype.runRoom = function(currentCreeps) {
+    currentCreeps = this.runSpawns(currentCreeps);
     
     if(this.find(FIND_STRUCTURES, {filter: s => s.structureType == STRUCTURE_LINK})[0] != undefined) {
         this.runLinks();
@@ -35,6 +24,7 @@ Room.prototype.runRoom = function() {
     }
     
     this.calculateUpgradeTime();
+    return currentCreeps;
 };
 
 Room.prototype.runLinks = function() {
@@ -63,15 +53,17 @@ Room.prototype.runLinks = function() {
     }
 };
 
-Room.prototype.runSpawns = function() {
+Room.prototype.runSpawns = function(currentCreeps) {
+    //console.log(JSON.stringify(currentCreeps['extractor']));
     try{
         var spawns = _.filter(Game.spawns, s=> s.room.name == this.name)
         for(let spawn of spawns) {
             //Spawn Creeps if Nescessary
             if(Game.spawns[spawn.name].canCreateCreep([MOVE]) == 0) {
-                Game.spawns[spawn.name].spawnCreepsIfNecessary();
+                currentCreeps = Game.spawns[spawn.name].spawnCreepsIfNecessary(currentCreeps);
             }
         }
+        return currentCreeps;
    } catch(err) {
        console.log("spawn operation error: " + err.stack);
        console.log(this.name);

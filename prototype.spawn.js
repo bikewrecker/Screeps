@@ -1,204 +1,290 @@
     var listOfRoles = ['miner', 'lorry', 'harvester','mobileUpgrader', 'upgrader', 'linkLorry','sourceLorry', 'builder', 'repairer', 'wallRepairer', 'turretSupplier', 'extractor','terminalLorry', 'mineralLorry', 'helper'];
+    //var allRoles = ['miner', 'lorry', 'harvester','mobileUpgrader', 'upgrader', 'linkLorry','sourceLorry', 'builder', 'repairer', 'wallRepairer', 'turretSupplier', 'extractor','terminalLorry', 'mineralLorry', 'helper', 'longDistanceLorry', 'longDistanceMiner', 'longDistanceRepairer', 'longDistanceHarvester', 'claimer', 'stealer']
     //Game.spawns.BIKES.memory.minCreeps = {harvester: 0, claimer: 1, upgrader: 2, builder: 1, repairer: 1, wallRepairer: 1, turretSupplier: 1, miner: 2, lorry: 2, linkLorry: 2};
-    StructureSpawn.prototype.spawnCreepsIfNecessary = function () {
-            /** @type {Room} */
-            let room = this.room;
-            let numberOfCreeps = {};
-            for (let role of listOfRoles) {
-                numberOfCreeps[role] = _.sum(Game.creeps, (c) => c.memory.role == role && c.memory.homeRoom == this.room.name && c.ticksToLive > 70);
+StructureSpawn.prototype.spawnCreepsIfNecessary = function (currentCreeps) {
+    /** @type {Room} */
+    let room = this.room;
+    let numberOfCreeps = {};
+    for (let role of listOfRoles) {
+        numberOfCreeps[role] = 0;
+        for(let creepRole in currentCreeps[role]) {
+            let creepName = currentCreeps[role][creepRole];
+            let creep = Game.creeps[creepName];
+            if(creep.memory.homeRoom == this.room.name && creep.ticksToLive > 70) {
+                numberOfCreeps[role]++;
             }
-            let maxEnergy = room.energyCapacityAvailable;
-            let name = undefined;
-            //Defense procedure
-            
-            if(this.room.memory.hostileCreep == true && !(_.some( _.filter(Game.creeps, c => c.memory.role == 'defender' && c.memory.target == this.room.memory.creepLocation)))) {
-                name = this.createDefender(this.room.memory.creepLocation);
-                if(name != undefined && _.isString(name)){
-                    console.log("Defence protocall initiated: " + this.name + " spawned defender: " + name + ", Objective location: " + this.room.memory.creepLocation);
-                    this.room.memory.hostileCreep = false;
+        }
+    }
+    let maxEnergy = room.energyCapacityAvailable;
+    let name = undefined;
+    //Defense procedure
+    // Edit following line later to not go through whole Game.creeps.
+    if(this.room.memory.hostileCreep == true) {
+        let numDefenders = {};
+        let role = 'defender';
+        numDefenders = 0;
+        if(currentCreeps[role] == undefined){
+            numDefenders++;
+        } else {
+            for(let creepRole in currentCreeps[role]) {
+                let creepName = currentCreeps[role][creepRole];
+                let creep = Game.creeps[creepName];
+                if(creep.memory.target == this.room.memory.creepLocation) {
+                  numDefenders++;
                 }
-            } else {
-                // Create a backup creep if needed
-                name = this.backup(numberOfCreeps);
-
-                // Spawn miners if necessary
-                name = this.checkForMiners();
-                
-                // if none of the above caused a spawn command check for standard roles
-                if (name == undefined) {
-                    for (let role of listOfRoles) {
-                        if (numberOfCreeps[role] < this.room.memory.minCreeps[role]) {
-                            name = this.spawnStandardCreep(role);
-                            if(name != undefined){
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                //spawn special creeps
-                if(name == undefined){
-                    name = this.spawnSpecialCreep(numberOfCreeps);
-                }
-
-                //if spawn was successfull
-                if (name != undefined && _.isString(name)) {
-                    if(Game.creeps[name].memory.target != undefined){
-                        console.log(this.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ") " + Game.creeps[name].memory.target);
-                    } else {
-                        console.log(this.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ")");
-                    }
-                   //this.room.displayCreeps();
-                }
+            }   
+        }
+        if(numDefenders > 0) {
+            name = this.createDefender(this.room.memory.creepLocation);
+            if(name != undefined && _.isString(name)){
+                console.log("Defence protocall initiated: " + this.name + " spawned defender: " + name + ", Objective location: " + this.room.memory.creepLocation);
+                this.room.memory.hostileCreep = false;
             }
-    };
-    
-    StructureSpawn.prototype.spawnSpecialCreep = function(numberOfCreeps) {
-        var name = undefined;
-        let room = this.room;
-    
-      
-        let numberOfLongDistanceMiners = {};
+        }
+    } else {
+        // Create a backup creep if needed
+        name = this.backup(numberOfCreeps);
+
+        // Spawn miners if necessary
+        name = this.checkForMiners();
+        
+        // if none of the above caused a spawn command check for standard roles
         if (name == undefined) {
+            for (let role of listOfRoles) {
+                if (numberOfCreeps[role] < this.room.memory.minCreeps[role]) {
+                    name = this.spawnStandardCreep(role);
+                    if(name != undefined){
+                        break;
+                    }
+                }
+            }
+        }
+        
+        //spawn special creeps
+        if(name == undefined){
+            name = this.spawnSpecialCreep(numberOfCreeps, currentCreeps);
+        }
+
+        //if spawn was successfull
+        if (name != undefined && _.isString(name)) {
+            if(Game.creeps[name].memory.target != undefined){
+                console.log(this.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ") " + Game.creeps[name].memory.target);
+            } else {
+                console.log(this.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ")");
+            }
+           //this.room.displayCreeps();
+        }
+    }
+    //if we spawned a new creep, update currentCreeps for other spawners.
+    if(name != undefined && _.isString(name)) {
+        let creep = Game.creeps[name];
+        if(currentCreeps[creep.memory.role] == undefined){
+            currentCreeps[creep.memory.role] = [];
+        }
+        currentCreeps[creep.memory.role].push(name);
+    }
+    return currentCreeps;
+};
+
+        StructureSpawn.prototype.spawnSpecialCreep = function(numberOfCreeps, currentCreeps) {
+            var name = undefined;
+            let room = this.room;
+            let numberOfLongDistanceMiners = 0;
+            if (name == undefined) {
             // count the number of long distance harvesters globally
+            let role = 'longDistanceMiner';
             for (let roomName in this.room.memory.minLongDistanceMiners) {
-                numberOfLongDistanceMiners[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'longDistanceMiner' && c.memory.target == roomName && c.memory.homeRoom == this.room.name && c.ticksToLive > 200);
-                if (numberOfLongDistanceMiners[roomName] < this.room.memory.minLongDistanceMiners[roomName]) {
+                //numberOfLongDistanceMiners[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'longDistanceMiner' && c.memory.target == roomName && c.memory.homeRoom == this.room.name && c.ticksToLive > 250);
+                numberOfLongDistanceMiners = 0;
+                for(let creepRole in currentCreeps[role]) {
+                    let creepName = currentCreeps[role][creepRole];
+                    let creep = Game.creeps[creepName];
+                    if(creep.memory.target == roomName && creep.memory.homeRoom == this.room.name && creep.ticksToLive > 250) {
+                        numberOfLongDistanceMiners++;
+                    }
+                }
+
+                if (numberOfLongDistanceMiners < this.room.memory.minLongDistanceMiners[roomName]) {
                     name = this.createLongDistanceMiner(roomName);
+                    break;
                 }
             }
         }
         
          //spawn claimers
-       let numberOfClaimers = {};
-       if (name == undefined && this.room.memory.maxClaimers != undefined) {
+         let numberOfClaimers = 0;
+         if (name == undefined && this.room.memory.maxClaimers != undefined) {
+            let role = 'claimer';
             for (let roomName in this.room.memory.maxClaimers) {
                 if(roomName != undefined){
-                    numberOfClaimers[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'claimer' && c.memory.target == roomName && c.ticksToLive > 100)
+                    //numberOfClaimers[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'claimer' && c.memory.target == roomName && c.ticksToLive > 100)
+                    numberOfClaimers = 0;
+                    for(let creepRole in currentCreeps[role]) {
+                        let creepName = currentCreeps[role][creepRole];
+                        let creep = Game.creeps[creepName];
+                        if(creep.memory.target == roomName && creep.ticksToLive > 100) {
+                            numberOfClaimers++;
+                        }
+                    }
                     if(this.room.energyCapacityAvailable > 800){
-                        if(this.room.memory.reserveTimers[roomName] < 4000 && numberOfClaimers[roomName] < this.room.memory.maxClaimers[roomName]){
+                        if(this.room.memory.reserveTimers[roomName] < 4000 && numberOfClaimers < this.room.memory.maxClaimers[roomName]){
                             name = this.createClaimer(roomName);
+                            break;
                         }
                     } else {
-                        if(control != undefined && numberOfClaimers[roomName] < this.room.memory.maxClaimers[roomName]) {
+                        if(control != undefined && numberOfClaimers < this.room.memory.maxClaimers[roomName]) {
                             name = this.createClaimer(roomName);
+                            break;
                         }
                     }
                 }
             }
-                
-        }
-        
-         let numberOfLongDistanceRepairers = {};
-        if (name == undefined) {
-            // count the number of long distance harvesters globally
-            for (let roomName in this.room.memory.minLongDistanceRepairers) {
-                numberOfLongDistanceRepairers[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'longDistanceRepairer' && c.memory.target == roomName && c.memory.homeRoom == this.room.name);
-                if (numberOfLongDistanceRepairers[roomName] < this.room.memory.minLongDistanceRepairers[roomName]) {
-                    name = this.createLongDistanceRepairer(roomName);
-                }
-            }
-        }
-        
-        let numberOfLongDistanceLorrys = {};
-        if (name == undefined) {
-            // count the number of long distance harvesters globally
-            for (let roomName in this.room.memory.minLongDistanceLorrys) {
-                numberOfLongDistanceLorrys[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'longDistanceLorry' && c.memory.target == roomName && c.memory.homeRoom == this.room.name && c.ticksToLive > 150);
-                if (numberOfLongDistanceLorrys[roomName] < this.room.memory.minLongDistanceLorrys[roomName]) {
-                    name = this.createLongDistanceLorry(roomName, this.room.memory.energyForRoles['longDistanceLorry']);
-                }
-            }
-        }
-        
-       
-        if(this.room.memory.minCreeps.stealer != undefined){
-            let numberOfStealers = 0;
-            if (name == undefined) {
-                
-                    let roomName = 'W79N25';
-                    numberOfStealers = _.sum(Game.creeps, (c) => c.memory.role == 'stealer' && c.memory.target == roomName && c.memory.homeRoom == this.room.name && c.ticksToLive > 150);
-                    if (numberOfStealers < this.room.memory.minCreeps.stealer) {
-                        name = this.createCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-                        undefined, {role: 'stealer', target: 'W79N25', homeRoom: this.room.name, working: false});
-                    }
-            }
-        }
-        
-        let numberOfLongDistanceHarvesters = {};
-        if (name == undefined) {
-            
 
+        }
+        
+        let numberOfLongDistanceRepairers = 0;
+        if (name == undefined) {
+            // count the number of long distance harvesters globally
+            let role = 'longDistanceRepairer';
+            for (let roomName in this.room.memory.minLongDistanceRepairers) {
+                //numberOfLongDistanceRepairers[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'longDistanceRepairer' && c.memory.target == roomName && c.memory.homeRoom == this.room.name);
+                numberOfLongDistanceRepairers = 0;
+                for(let creepRole in currentCreeps[role]) {
+                    let creepName = currentCreeps[role][creepRole];
+                    let creep = Game.creeps[creepName];
+                    if(creep.memory.target == roomName && creep.memory.homeRoom == this.room.name) {
+                        numberOfLongDistanceRepairers++;
+                    }
+                }
+                if (numberOfLongDistanceRepairers < this.room.memory.minLongDistanceRepairers[roomName]) {
+                    name = this.createLongDistanceRepairer(roomName);
+                    break;
+                }
+            }
+        }
+        
+        let numberOfLongDistanceLorrys = 0;
+        if (name == undefined) {
+            // count the number of long distance harvesters globally
+            let role = 'longDistanceLorry';
+            for (let roomName in this.room.memory.minLongDistanceLorrys) {
+                //numberOfLongDistanceLorrys[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'longDistanceLorry' && c.memory.target == roomName && c.memory.homeRoom == this.room.name && c.ticksToLive > 150);
+                numberOfLongDistanceLorrys = 0;
+                //console.log(JSON.stringify(currentCreeps[role]));
+                for(let creepRole in currentCreeps[role]) {
+                    let creepName = currentCreeps[role][creepRole];
+                    let creep = Game.creeps[creepName];
+                    //console.log("HELLOOO " + creepName);
+                    if(creep.memory.target == roomName && creep.memory.homeRoom == this.room.name && creep.ticksToLive > 150) {
+                       numberOfLongDistanceLorrys++;
+                   }
+                }
+                //console.log(this.room.name + " " + roomName + " " + numberOfLongDistanceLorrys + " " + this.room.memory.minLongDistanceLorrys[roomName])
+                if(numberOfLongDistanceLorrys < this.room.memory.minLongDistanceLorrys[roomName]) {
+                    name = this.createLongDistanceLorry(roomName, this.room.memory.energyForRoles['longDistanceLorry']);
+                    break;
+                }
+            }
+        }
+   /*     
+    if(this.room.memory.minCreeps.stealer != undefined){
+        let numberOfStealers = 0;
+        if (name == undefined) {
+            let roomName = 'W79N25';
+            numberOfStealers = _.sum(Game.creeps, (c) => c.memory.role == 'stealer' && c.memory.target == roomName && c.memory.homeRoom == this.room.name && c.ticksToLive > 150);
+            if (numberOfStealers < this.room.memory.minCreeps.stealer) {
+                name = this.createCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
+                    undefined, {role: 'stealer', target: 'W79N25', homeRoom: this.room.name, working: false});
+                console.log(name);
+            }
+        }
+    }
+    */
+    if(this.room.name == 'W75N23'){
+        console.log("outside");
+   }
+    let numberOfLongDistanceHarvesters = 0;
+    if (name == undefined) {
+       let role = "longDistanceHarvester"; 
+       if(this.room.name == 'W75N23'){
+            console.log(name);
+       }
             // count the number of long distance harvesters globally
             for (let roomName in this.room.memory.minLongDistanceHarvesters) {
                 //console.log(roomName);
-                numberOfLongDistanceHarvesters[roomName] = _.sum(Game.creeps, (c) =>
-                    c.memory.role == 'longDistanceHarvester' && c.memory.target == roomName && c.memory.homeRoom == this.room.name);
-                if (numberOfLongDistanceHarvesters[roomName] < this.room.memory.minLongDistanceHarvesters[roomName]) {
-                    name = this.createLongDistanceHarvester(roomName);
+                //numberOfLongDistanceHarvesters[roomName] = _.sum(Game.creeps, (c) => c.memory.role == 'longDistanceHarvester' && c.memory.target == roomName && c.memory.homeRoom == this.room.name);
+                if(this.room.name == 'W75N23') {
+                    console.log("here");
                 }
+                numberOfLongDistanceHarvesters = 0;
+                for(let creepRole in currentCreeps[role]) {
+                    let creepName = currentCreeps[role][creepRole];
+                    let creep = Game.creeps[creepName];
+                    if(creep.memory.target == roomName && creep.memory.homeRoom == this.room.name) {
+                       numberOfLongDistanceHarvesters++;
+                   }
+               }
+               if (numberOfLongDistanceHarvesters < this.room.memory.minLongDistanceHarvesters[roomName]) {
+                    name = this.createLongDistanceHarvester(roomName);
+                    console.log(name);
+                    break;
             }
         }
-        
-         
-        
-        /*
-        if(this.room.name == 'W75N23' && name == undefined) {
-            this.createMeleeAttacker('W76N22');
-        }
-        */
-        
+    }
+
         //spawn a terminal Lorry
         if(name == undefined){
             let terminal = this.room.terminal;
             let mine = this.room.find(FIND_MINERALS)[0];
-                if(mine.ticksToRegeneration > 0){
-
-                } else {
-                   if(terminal != undefined && terminal.store[RESOURCE_ENERGY] < 3000 && numberOfCreeps['terminalLorry'] < this.room.memory.maxCreeps.terminalLorrys){
-                         name = this.createCarrier(this.room.memory.energyForRoles['terminalLorry'], 'terminalLorry');
-                    }             
-                }
-            
+            if((mine.mineralAmount > 0) || (mine.ticksToRegeneration != undefined && mine.ticksToRegeneration > 0)){
+                if(this.room.name == 'W75N23'){
+                 console.log(terminal != undefined);
+                 console.log(terminal.store[RESOURCE_ENERGY] < 3000);
+                 console.log(numberOfCreeps['terminalLorry'] < this.room.memory.maxCreeps.terminalLorrys);
+             }
+             if(terminal != undefined && terminal.store[RESOURCE_ENERGY] < 3000 && numberOfCreeps['terminalLorry'] < this.room.memory.maxCreeps.terminalLorrys){
+                console.log(name);
+                name = this.createCarrier(this.room.memory.energyForRoles['terminalLorry'], 'terminalLorry');
+            }             
         }
-        
-        return name;
-    };
-    
-    StructureSpawn.prototype.spawnStandardCreep = function(role) {
-        var name = undefined;
-        let room = this.room;
-        
-        if (role == 'lorry') {
-            var containers = [];
-            _.each(room.memory.containers, function(val, key) {
-                if(val != undefined && key != 'mineral') {
-                    containers.push(val);
-                }
-            });
-            for(let container in containers) {
-                if(!(_.some(this.room.find(FIND_MY_CREEPS, {filter: c => c.memory.role == 'lorry' && c.memory.homeRoom == this.room.name && c.memory.containerID == containers[container]})))){
-                    name = this.createCarrier(this.room.memory.energyForRoles[role], role, undefined, containers[container]);
-                    break;
-                }
-            }
-        } else if(role == 'linkLorry' || role == 'sourceLorry' || role == 'mineralLorry') {
-            if(role == 'mineralLorry'){
-                let mine = this.room.find(FIND_MINERALS)[0];
-                if(mine.ticksToRegeneration > 0){
+    }
+    return name;
+};
 
-                } else {
-                    name = this.createCarrier(this.room.memory.energyForRoles[role], role);
-                }
-            } else{
+StructureSpawn.prototype.spawnStandardCreep = function(role) {
+    var name = undefined;
+    let room = this.room;
+
+    if (role == 'lorry') {
+        var containers = [];
+        _.each(room.memory.containers, function(val, key) {
+            if(val != undefined && key != 'mineral') {
+                containers.push(val);
+            }
+        });
+        for(let container in containers) {
+            if(!(_.some(this.room.find(FIND_MY_CREEPS, {filter: c => c.memory.role == 'lorry' && c.memory.homeRoom == this.room.name && c.memory.containerID == containers[container]})))){
+                name = this.createCarrier(this.room.memory.energyForRoles[role], role, undefined, containers[container]);
+                break;
+            }
+        }
+    } else if(role == 'linkLorry' || role == 'sourceLorry' || role == 'mineralLorry') {
+        if(role == 'mineralLorry'){
+            let mine = this.room.find(FIND_MINERALS)[0];
+            if(mine.ticksToRegeneration > 0){
+
+            } else {
                 name = this.createCarrier(this.room.memory.energyForRoles[role], role);
             }
-        } else if (role == 'upgrader'){
-            name = this.createUpgrader(this.room.memory.energyForRoles[role]);
-        } else if (role == 'helper'){
-            name = this.createHelper(this.room.memory.energyForRoles[role], 'W79N24');
-        } else if(role == 'turretSupplier') {
-            var towers = room.find(FIND_MY_STRUCTURES, {filter: s => s.structureType == STRUCTURE_TOWER});
+        } else{
+            name = this.createCarrier(this.room.memory.energyForRoles[role], role);
+        }
+    } else if (role == 'upgrader'){
+        name = this.createUpgrader(this.room.memory.energyForRoles[role]);
+    } else if (role == 'helper'){
+        name = this.createHelper(this.room.memory.energyForRoles[role], 'W79N24');
+    } else if(role == 'turretSupplier') {
+        var towers = room.find(FIND_MY_STRUCTURES, {filter: s => s.structureType == STRUCTURE_TOWER});
             // for each tower
             for(let tower of towers) {
                 let towerID = tower.id;
@@ -210,11 +296,11 @@
             }
         } else if(role == 'extractor') {
             let mine = this.room.find(FIND_MINERALS)[0];
-                if(mine.ticksToRegeneration > 0){
+            if(mine.ticksToRegeneration > 0){
 
-                } else {
-                    name = this.createExtractor(this.room.memory.energyForRoles[role]);                
-                }
+            } else {
+                name = this.createExtractor(this.room.memory.energyForRoles[role]);                
+            }
         } else {
             name = this.createCustomCreep(this.room.memory.energyForRoles[role], role);
         }
@@ -235,7 +321,7 @@
         }
         return name;
     };
-        
+
     StructureSpawn.prototype.checkForMiners = function() {
         let creepsInRoom = this.room.find(FIND_MY_CREEPS);
         let sources = this.room.find(FIND_SOURCES);
@@ -364,15 +450,14 @@
     StructureSpawn.prototype.createCarrier = function(energy, role, towerID, containerID) {
         var numberOfParts = Math.floor(energy/150);
         var body = [];
-        for(let i = 0; i < numberOfParts * 2; i++) {
-            body.push(CARRY);
-        }
         for(let i = 0; i < numberOfParts; i++) {
+            body.push(CARRY);
+            body.push(CARRY);
             body.push(MOVE);
-        } if(role == 'lorry') {
+        }
+        if(role == 'lorry') {
             return this.createCreep(body, undefined, {role: role, working: false, towerID: towerID, containerID: containerID, homeRoom: this.room.name});
         }
-        
         return this.createCreep(body, undefined, {role: role, working: false, homeRoom: this.room.name, towerID: towerID});
     };
     

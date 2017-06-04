@@ -16,14 +16,15 @@ module.exports = {
                 if(creep.ticksToLive % 25 == 1) {
                     Game.rooms[creep.memory.homeRoom].memory.reserveTimers[creep.room.name] = controller.reservation.ticksToEnd;
                 }
-                /*
                 if(controller.sign != undefined) {
                     if(controller.sign.username != 'bikewrecker') {
                         creep.signController(controller, "Claimed by bikewrecker");
                         console.log("Sign set!");
                     }
+                } else {
+                   creep.signController(controller, "Claimed by bikewrecker");
+                   console.log("Sign set!");
                 }
-                */
             }
        }
     }
