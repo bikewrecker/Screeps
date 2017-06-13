@@ -3,9 +3,14 @@ require('prototype.spawn');
 require('prototype.terminal');
 require('prototype.tower');
 
-Room.prototype.runRoom = function(currentCreeps) {
-    currentCreeps = this.runSpawns(currentCreeps);
-    
+Room.prototype.runRoom = function() {
+    this.runSpawns();
+    /*
+    if(this.name == 'W75N23') {
+        this.addRoomToDistanceRooms('W1N1');
+    }
+    */
+
     if(this.find(FIND_STRUCTURES, {filter: s => s.structureType == STRUCTURE_LINK})[0] != undefined) {
         this.runLinks();
     }
@@ -16,15 +21,13 @@ Room.prototype.runRoom = function(currentCreeps) {
     if(towers[0] != undefined) {
         this.runTowers(towers);
     }
-    
-    if(this.memory.reserveTimers != undefined && Game.time % 25 == 0) {
-        for(let time in this.memory.reserveTimers) {
-            this.memory.reserveTimers[time] -= 25;
+    if(this.memory.distanceRooms != undefined && Game.time % 25 == 0) {
+        for(let room in this.memory.distanceRooms) {
+            this.memory.distanceRooms[room].reserveTimer -= 25;
         }
     }
-    
     this.calculateUpgradeTime();
-    return currentCreeps;
+    return 0;
 };
 
 Room.prototype.runLinks = function() {
@@ -34,7 +37,7 @@ Room.prototype.runLinks = function() {
     var externalLink = Game.getObjectById(this.memory.links.externalLink);
     switch(this.name) {
         case 'W78N26': 
-            externalLink.activate(upgraderLink, .5);
+            externalLink.activate(upgraderLink, 0);
             if(externalLink.energy < 400 && upgraderLink.energy < 20){
                 homeLink.activate(upgraderLink, .5);
             }
@@ -47,23 +50,33 @@ Room.prototype.runLinks = function() {
                 externalLink.activate(upgraderLink, .5);
             }
             break;
+           case 'W75N23':
+            if(upgraderLink.energy <= 400){
+                homeLink.activate(upgraderLink, .5);
+            }
+            break; 
+            case 'W73N25':
+            if(upgraderLink.energy <= 400){
+                homeLink.activate(upgraderLink, .5);
+            }
+            break;
     }
     } catch (err) {
         console.log("Link operation error: " + err.stack);
     }
 };
 
-Room.prototype.runSpawns = function(currentCreeps) {
-    //console.log(JSON.stringify(currentCreeps['extractor']));
+Room.prototype.runSpawns = function() {
     try{
+        var creepsBeforeSpawning = undefined;
         var spawns = _.filter(Game.spawns, s=> s.room.name == this.name)
         for(let spawn of spawns) {
-            //Spawn Creeps if Nescessary
             if(Game.spawns[spawn.name].canCreateCreep([MOVE]) == 0) {
-                currentCreeps = Game.spawns[spawn.name].spawnCreepsIfNecessary(currentCreeps);
+                Game.spawns[spawn.name].spawnCreepsIfNecessary();
             }
         }
-        return currentCreeps;
+        
+        return 0;
    } catch(err) {
        console.log("spawn operation error: " + err.stack);
        console.log(this.name);
@@ -147,4 +160,15 @@ Room.prototype.calculateUpgradeTime = function() {
         } catch(err) {
             console.log("Display Creeps Error: " + err.stack);
         }
+    };
+
+    Room.prototype.addRoomToDistanceRooms = function(room) {
+        this.memory.distanceRooms[room] = {};
+        let container = Game.rooms[room].find(FIND_STRUCTURES, {filter: c => c.structureType == STRUCTURE_CONTAINER})[0];
+        this.memory.distanceRooms[room].container1 = container.id;
+        container = Game.rooms[room].find(FIND_STRUCTURES, {filter: c => c.structureType == STRUCTURE_CONTAINER})[1];
+        if(container != undefined) {
+            this.memory.distanceRooms[room].container2 = container.id;
+        }
+        this.memory.distanceRooms[room].reserveTimer = 0;
     };

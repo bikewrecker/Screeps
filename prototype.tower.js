@@ -19,7 +19,7 @@ StructureTower.prototype.defend =
 StructureTower.prototype.repairStructs =
     function () {
         var structure = this.pos.findClosestByRange(FIND_STRUCTURES, {filter: (s) => s.hits < s.hitsMax && s.structureType != STRUCTURE_WALL && s.structureType != STRUCTURE_RAMPART});
-        if(structure != undefined && this.energy/this.energyCapacity > 0.8) {
+        if(structure != undefined && (this.energy/this.energyCapacity > 0.8)) {
             this.repair(structure);
         }
     };

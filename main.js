@@ -4,6 +4,8 @@ const profiler = require('screeps-profiler');
 profiler.enable();
 module.exports.loop = function () {
     profiler.wrap(function() {
+      
+
     //Clear dead creep from memory
     try{
         for(let name in Memory.creeps) {
@@ -16,17 +18,19 @@ module.exports.loop = function () {
     }
 
     //Get current creeps and sort them by their role
-    try{
-        var currentCreeps = {};
-        for (let creepName in Game.creeps) {
-            let role = Game.creeps[creepName].memory.role;
-            if(currentCreeps[role] == undefined){
-                currentCreeps[role] = [];
+    if(Game.time % 20 == 0){
+        try{
+            Memory.currentCreeps = {};
+            for (let creepName in Game.creeps) {
+                let role = Game.creeps[creepName].memory.role;
+                if(Memory.currentCreeps[role] == undefined){
+                    Memory.currentCreeps[role] = [];
+                }
+                Memory.currentCreeps[role].push(creepName);
             }
-            currentCreeps[role].push(creepName);
+        } catch (err) {
+            console.log("Error calculating number of Creeps" + " " + err.stack)
         }
-    } catch (err) {
-        console.log("Error calculating number of Creeps" + " " + err.stack)
     }
 
     //Operate Creeps
@@ -40,7 +44,6 @@ module.exports.loop = function () {
     
     //Operate Rooms
     try{
-        //console.log(JSON.stringify(currentCreeps['extractor']));
         var myRooms = [];
         for(let room in Game.rooms){
             if(Game.rooms[room].controller != undefined && Game.rooms[room].controller.owner != undefined && Game.rooms[room].controller.owner.username == 'bikewrecker') {
@@ -48,7 +51,7 @@ module.exports.loop = function () {
             }
         }
         for(let room of myRooms){
-            currentCreeps = Game.rooms[room].runRoom(currentCreeps);
+            Game.rooms[room].runRoom();
         }
     } catch(err) {
         console.log("Room Runtime Error: " + err.stack);

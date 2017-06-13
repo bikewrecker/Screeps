@@ -5,7 +5,11 @@ module.exports = {
        creep.work();
        
        if(creep.memory.working == true) {
-            roleRepairer.run(creep);
+        if(creep.room.name != creep.memory.target) {
+          creep.moveTo(Game.flags[creep.memory.target]);
+        } else {
+          roleRepairer.run(creep);
+        }
        } else { // working == false;
            if(creep.room.name == creep.memory.target) {
                if(creep.memory.containerID == undefined){
@@ -17,13 +21,11 @@ module.exports = {
                         creep.memory.containerID = cont.id;
                     }
                 }
-                if(creep.memory.containerID == undefined) {
+                let container = creep.getEnergyFromContainer();
+                if(container == -6) {
                     creep.getEnergyFromSource();
-                } else {
-                    let container = creep.getEnergyFromContainer();
-                    if(container == -1 && !creep.pos.isEqualTo(Game.flags[creep.memory.target + "Source"].pos)) {
-                        creep.moveTo(Game.flags[creep.memory.target + "Source"]);
-                    }
+                } else if(container != 0 && container != 1 && !creep.pos.isEqualTo(Game.flags[creep.memory.target + "Source"].pos)) {
+                    creep.moveTo(Game.flags[creep.memory.target + "Source"]);
                 }
            } else {
                creep.moveTo(Game.flags[creep.memory.target]);

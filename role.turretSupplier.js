@@ -7,12 +7,19 @@ module.exports = {
        if(creep.memory.working == true) {
            
            var tower = Game.getObjectById(creep.memory.towerID);
-           if (creep.transfer(tower, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+           if(creep.transfer(tower, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                creep.moveTo(tower);
            } else {
                let succ = creep.transfer(tower, RESOURCE_ENERGY);
                if(succ == 0) {
-                   let newTower = creep.room.find(FIND_STRUCTURES, {filter: c => c.structureType == STRUCTURE_TOWER && c.id != creep.memory.towerID})[0];
+                   let towers = creep.room.find(FIND_MY_STRUCTURES, {filter: c => c.structureType == STRUCTURE_TOWER && c.id != creep.memory.towerID});
+                   let newTower = tower;
+                   //console.log(newTower);
+                   for(let towerIter in towers){
+                    if(towers[towerIter].energy < newTower.energy || (newTower.pos.isEqualTo(tower.pos) && towers[towerIter].energy < newTower.energy + creep.carry.energy)) {
+                      newTower = towers[towerIter];
+                    }
+                   }
                    if(newTower != undefined){
                         creep.memory.towerID = newTower.id;
                    }
@@ -20,11 +27,16 @@ module.exports = {
            }
        } else {
            creep.checkGround(2);
-           let check = creep.getEnergyFromStorage();
-           if(check == ERR_NOT_IN_RANGE) {
-               creep.moveTo(creep.room.storage);
-           } else if(check != 0) {
-              creep.getEnergyFromContainer();
+           var container = creep.room.storage;
+           if(container != undefined) {
+               creep.getEnergyFromStorage();
+           } else {
+               container = creep.pos.findClosestByRange(FIND_STRUCTURES, {filter: c => c.structureType == STRUCTURE_CONTAINER})
+               if(container != undefined){
+                    creep.getEnergyFromContainer();
+                } else {
+                   creep.getEnergyFromSource();
+                }
            }
         }
     }

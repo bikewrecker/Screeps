@@ -8,14 +8,13 @@ run: function(creep) {
             var constructionSite = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
             if(constructionSite == undefined){
                 roleUpgrader.run(creep);
-            } 
-            else if(creep.build(constructionSite) == ERR_NOT_IN_RANGE){
+            } else if(creep.build(constructionSite) == ERR_NOT_IN_RANGE){
                     creep.moveTo(constructionSite);
                 } else {
                     creep.build(constructionSite);
                 }
            } else { //workign == false
-                creep.checkGround(2);
+               creep.checkGround(2);
                var container = creep.room.storage;
                if(container != undefined) {
                    creep.getEnergyFromStorage();

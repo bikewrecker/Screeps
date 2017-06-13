@@ -23,7 +23,9 @@ var roles = {
     manual: require('role.manual'),
     mobileUpgrader: require('role.mobileUpgrader'),
     meleeAttacker: require('role.meleeAttacker'),
-    stealer: require('role.stealer')
+    stealer: require('role.stealer'),
+    scout: require('role.scout'),
+    squadMember: require('role.squadMember')
 };
 
 Creep.prototype.runRole =
@@ -45,13 +47,16 @@ Creep.prototype.getEnergyFromContainer = function () {
 
         if (container != undefined) {
             // try to withdraw energy, if the container is not in range
-            var taken = this.withdraw(container, RESOURCE_ENERGY);
-            if (taken == ERR_NOT_IN_RANGE) {
-                // move towards it
-                this.moveTo(container);
-                return 1;
+            if(container.store[RESOURCE_ENERGY] > 10) {
+                var taken = this.withdraw(container, RESOURCE_ENERGY);
+                if (taken == ERR_NOT_IN_RANGE) {
+                    // move towards it
+                    this.moveTo(container);
+                    return 1;
+                }
+                return taken;
             }
-            return taken;
+            return -6;
         } else {
             return -1;
         }
@@ -120,8 +125,7 @@ Creep.prototype.getEnergyFromStorage =
         return -1;
     };
     
-Creep.prototype.getEnergyFromLink = 
-    function (linkID) {
+Creep.prototype.getEnergyFromLink = function (linkID) {
         if(linkID != undefined) {
            var link = Game.getObjectById(linkID); 
         } else{
@@ -142,9 +146,8 @@ Creep.prototype.getEnergyFromLink =
         }
     };
     
-Creep.prototype.getEnergyFromGround =
-    function () {
-        const target = this.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {filter: {resourceType: RESOURCE_ENERGY}});
+Creep.prototype.getEnergyFromGround = function () {
+        const target = this.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {filter: r => r.resourceType == RESOURCE_ENERGY});
         if(target != undefined) {
             var pick = this.pickup(target);
             if(pick == ERR_NOT_IN_RANGE) {
@@ -176,7 +179,7 @@ Creep.prototype.getEnergyFromGround =
     Creep.prototype.checkGround = function(distance) {
         let nearbyEnergy = this.pos.findInRange(FIND_DROPPED_RESOURCES, distance)[0];
             if(nearbyEnergy != undefined && nearbyEnergy.amount > 10) {
-               let ret = this.getEnergyFromGround(distance);
+               let ret = this.getEnergyFromGround();
                return ret;
             } else {
                 return -1;
