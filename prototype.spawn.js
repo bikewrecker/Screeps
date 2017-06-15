@@ -12,7 +12,7 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function () {
             if(Memory.currentCreeps[role] != undefined){
                 let creep = Game.creeps[Memory.currentCreeps[role][creepRole]];
                 if(creep != undefined){
-                    if(creep.memory.homeRoom == this.room.name && (creep.ticksToLive > 70 || creep.ticksToLive == undefined)) {
+                    if(creep.memory.homeRoom == this.room.name && (creep.ticksToLive > 150 || creep.ticksToLive == undefined)) {
                         numberOfCreeps[role]++;
                     }
                 }
@@ -35,7 +35,7 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function () {
         // if none of the above caused a spawn command check for standard roles
         if (name == undefined) {
             for (let role of listOfRoles) {
-                if (numberOfCreeps[role] < this.room.memory.minCreeps[role]) {
+                if (numberOfCreeps[role] < this.room.memory.minCreeps[role] && role != 'miner') {
                     name = this.spawnStandardCreep(role);
                     if(name != undefined){
                         break;
@@ -46,8 +46,9 @@ StructureSpawn.prototype.spawnCreepsIfNecessary = function () {
         //spawn special creeps
         if(name == undefined){
             name = this.spawnSpecialCreep(numberOfCreeps);
-
         }
+
+
         
 
         //if spawn was successfull
@@ -481,8 +482,6 @@ StructureSpawn.prototype.spawnStandardCreep = function(role) {
         return this.createCreep(body, undefined, {role: 'helper', working: false, target: target, homeRoom: this.room.name});
     };
 
-   
-    
     StructureSpawn.prototype.createExtractor = function(energy) {
         if(_.isString(energy)) {
             energy = this.room.energyCapacityAvailable;
@@ -608,7 +607,7 @@ StructureSpawn.prototype.spawnStandardCreep = function(role) {
             energy = this.room.energyCapacityAvailable;
         }
         if(role == 'upgrader'){
-            if(this.room.controller.level < 7 || this.room.name != 'W75N23'){
+            if(this.room.controller.level < 7 || this.room.name == 'W78N26'){
                 var useEnergy = energy - 50;
                 var numberOfParts = Math.floor(useEnergy/450);
                 var body = [];
@@ -700,6 +699,9 @@ StructureSpawn.prototype.spawnStandardCreep = function(role) {
     StructureSpawn.prototype.checkForInvasion = function() {
         let room = Game.rooms[this.room.memory.creepLocation];
         if(room != undefined){
+            if(room.name == this.room.name) {
+                return true;
+            }
             let creeps = room.find(FIND_HOSTILE_CREEPS);
             if(creeps.length > 1) {
                 return true;
@@ -788,24 +790,16 @@ StructureSpawn.prototype.spawnStandardCreep = function(role) {
                     squadMates[creep.memory.subRole] = creep.id;
                 } 
             } 
-            console.log(JSON.stringify(squadMates));
-            console.log(squadMates.meleeAttacker);
-            console.log(squadMates.rangedAttacker);
-            console.log(squadMates.healer);
-            Game.notify(JSON.stringify(squadMates));
-            Game.notify(squadMates.meleeAttacker);
-            Game.notify(squadMates.rangedAttacker);
-            Game.notify(squadMates.healer);
             for(let creepRole in Memory.currentCreeps[role]) {
                 let creep = Game.creeps[Memory.currentCreeps[role][creepRole]];
                 if(creep.memory.homeRoom == this.room.name){
-                    if(creep.subRole == 'healer'){
+                    if(creep.memory.subRole == 'healer'){
                         creep.memory.rangedMate = squadMates.rangedAttacker;
                         creep.memory.meleeMate = squadMates.meleeAttacker;
-                    } else if(creep.subRole == 'meleeAttacker') {
+                    } else if(creep.memory.subRole == 'meleeAttacker') {
                         creep.memory.rangedMate = squadMates.rangedAttacker;
                         creep.memory.healerMate = squadMates.healer;
-                    } else if(creep.subRole == 'rangedAttacker') {
+                    } else if(creep.memory.subRole == 'rangedAttacker') {
                         creep.memory.meleeMate = squadMates.meleeAttacker;
                         creep.memory.healerMate = squadMates.healer;
                     }

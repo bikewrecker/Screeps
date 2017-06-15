@@ -4,6 +4,14 @@ require('prototype.terminal');
 require('prototype.tower');
 
 Room.prototype.runRoom = function() {
+
+    let hostilePlayer = this.find(FIND_HOSTILE_CREEPS, {filter: c => c.owner.username != 'Invader'})[0];
+    if(hostilePlayer != undefined) {
+        Game.notify("Enemy spotted in room " + this.name + "! Attack may be imminent!!!")
+        this.memory.hostileCreep = true;
+        this.memory.creepLocation = this.name;
+    }
+
     this.runSpawns();
     /*
     if(this.name == 'W75N23') {

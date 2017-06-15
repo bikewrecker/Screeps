@@ -1,6 +1,6 @@
 StructureTerminal.prototype.sellMinerals = function() {
     var mineral = this.room.find(FIND_MINERALS)[0].mineralType;
-    var minPrice = {'Z': 0.15, 'H': 0.15, 'O': .2};
+    var minPrice = {'Z': 0.15, 'H': 0.15, 'O': .2, 'U': .2};
     
     if(this.store[RESOURCE_ENERGY] >= 2000 && this.store[mineral] > 4000) {
         var orders = Game.market.getAllOrders(order => order.resourceType == mineral && order.type == ORDER_BUY && order.remainingAmount >= 2000 && Game.market.calcTransactionCost(2000, this.room.name, order.roomName) < 1500);

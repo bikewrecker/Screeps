@@ -1,6 +1,6 @@
 module.exports = {
     run: function(creep) {
-      if(creep.room.name == 'W75N21') {
+      if(creep.room.name == 'W75N21' && creep.memory.target != 'W75N21') {
         creep.moveTo(Game.flags.dummy);
       } else {
        if(creep.room.name != creep.memory.target) {

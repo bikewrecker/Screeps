@@ -5,18 +5,18 @@ profiler.enable();
 module.exports.loop = function () {
     profiler.wrap(function() {
       
-
     //Clear dead creep from memory
-    try{
-        for(let name in Memory.creeps) {
-            if(Game.creeps[name] == undefined) {
-                delete(Memory.creeps[name]);
+    if(Game.time % 20 == 0){
+        try{
+            for(let name in Memory.creeps) {
+                if(Game.creeps[name] == undefined) {
+                    delete(Memory.creeps[name]);
+                }
             }
+        } catch(err) {
+            console.log("Memory cleanup error: " + err.stack);
         }
-    } catch(err) {
-        console.log("Memory cleanup error: " + err.stack);
     }
-
     //Get current creeps and sort them by their role
     if(Game.time % 20 == 0){
         try{
