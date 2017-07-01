@@ -25,7 +25,8 @@ var roles = {
     meleeAttacker: require('role.meleeAttacker'),
     stealer: require('role.stealer'),
     scout: require('role.scout'),
-    squadMember: require('role.squadMember')
+    squadMember: require('role.squadMember'),
+    rangedAttacker: require('role.rangedAttacker')
 };
 
 Creep.prototype.runRole =

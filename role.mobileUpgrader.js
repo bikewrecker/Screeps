@@ -1,7 +1,7 @@
 module.exports = {
     run: function(creep) {
       if(creep.memory.containerID == undefined){
-          creep.memory.containerID = creep.room.memory.containers.source2;
+          creep.memory.containerID = creep.room.memory.containers.source1;
       }
 
       if(creep.room.name != creep.memory.homeRoom){
@@ -27,12 +27,13 @@ module.exports = {
               if(str != undefined) {
                   creep.getEnergyFromStorage();
               } else {
-                let container = creep.room.find(FIND_STRUCTURES, {filter: c => c.structureType == STRUCTURE_CONTAINER})[0];
-                  if (container != undefined) {
-                    creep.getEnergyFromContainer();
-                  } else {
-                    creep.getEnergyFromSource();
-                  }
+                creep.getEnergyFromSource();
+                // let container = Game.getObjectById(creep.memory.container);
+                //   if (container != undefined) {
+                //     creep.getEnergyFromContainer();
+                //   } else {
+                //     creep.getEnergyFromSource();
+                //   }
               }
           }
       }

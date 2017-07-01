@@ -18,14 +18,20 @@ module.exports = {
                         var cont = source.pos.findInRange(FIND_STRUCTURES, 1, {filter: s => s.structureType == STRUCTURE_CONTAINER})[0];
                     }
                     if(cont != undefined) {
-                        creep.memory.containerID = cont.id;
+                      creep.memory.containerID = cont.id;
+                    } else {
+                      creep.memory.containerID = 0;
                     }
                 }
-                let container = creep.getEnergyFromContainer();
-                if(container == -6) {
-                    creep.getEnergyFromSource();
-                } else if(container != 0 && container != 1 && !creep.pos.isEqualTo(Game.flags[creep.memory.target + "Source"].pos)) {
-                    creep.moveTo(Game.flags[creep.memory.target + "Source"]);
+                if(creep.memory.containerID == 0) {
+                  creep.getEnergyFromSource();
+                } else {
+                  let container = creep.getEnergyFromContainer();
+                  if(container == -6) {
+                      creep.getEnergyFromSource();
+                  } else if(container != 0 && container != 1 && !creep.pos.isEqualTo(Game.flags[creep.memory.target + "Source"].pos)) {
+                      creep.moveTo(Game.flags[creep.memory.target + "Source"]);
+                  }                  
                 }
            } else {
                creep.moveTo(Game.flags[creep.memory.target]);

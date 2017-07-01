@@ -12,7 +12,7 @@ module.exports = {
            //bring to upgrader
            
            if(creep.room.name != creep.memory.homeRoom){
-                creep.moveTo(Game.flags[creep.room.name + 'Exit']);
+                creep.moveTo(Game.flags[creep.memory.homeRoom + 'Source']);
             } else {
                 if(creep.memory.homeRoom != 'W78N26') {
                     var structure = creep.room.storage;
@@ -56,8 +56,9 @@ module.exports = {
                      if (cont != undefined) {
                          creep.getResourcesFromContainer();
                      } else {
-                         if(!creep.pos.isEqualTo(Game.flags[creep.room.name + 'Source'].pos)){
-                              creep.moveTo(Game.flags[creep.room.name + 'Source']);
+                        let flag = Game.flags[creep.room.name + 'Source'];
+                         if(!(creep.pos.isEqualTo(flag.pos))){
+                              creep.moveTo(flag);
                           }
                      }
                  } 

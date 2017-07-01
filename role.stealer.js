@@ -34,7 +34,6 @@ module.exports = {
             }
             */
                var store = creep.room.storage;
-               //var ramp = creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES, {filter: s => s.structureType == STRUCTURE_SPAWN});
                var ramp = Game.getObjectById('58f4ac56d7f59b9976ae0f91');
 
                if(creep.attack(ramp) == ERR_NOT_IN_RANGE) {
